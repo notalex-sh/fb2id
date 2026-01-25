@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>fb2id</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>fb2id</h1>
+      <p class="tagline">Extract profile data from Facebook</p>
+    </header>
+    <div class="tabs">
+      <button class="tab active" onclick="setMode('url')">Profile URL</button>
+      <button class="tab" onclick="setMode('name')">Public Name Search</button>
+    </div>
+    <div id="url-mode" class="search-box">
+      <input type="text" id="fburl" placeholder="Paste Facebook profile URL...">
+      <button class="search-btn" onclick="extract()">Extract</button>
+    </div>
+    <div id="name-mode" class="search-box hidden">
+      <input type="text" id="fbname" placeholder="Enter full name...">
+      <button class="search-btn" onclick="searchName()">Search</button>
+    </div>
+    <div id="result"></div>
+  </div>
+  <script>
+    function setMode(mode){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));event.target.classList.add('active');document.getElementById('url-mode').classList.toggle('hidden',mode!=='url');document.getElementById('name-mode').classList.toggle('hidden',mode!=='name');document.getElementById('result').innerHTML=''}
+    function searchName(){const name=document.getElementById('fbname').value.trim();if(!name)return;window.open(`https://www.facebook.com/public/${name.replace(/\s+/g,'-')}`,'_blank')}
+    function copy(text,btn){navigator.clipboard.writeText(text);const orig=btn.textContent;btn.textContent='Copied';setTimeout(()=>btn.textContent=orig,1000)}
+    async function extract(){const url=document.getElementById('fburl').value.trim();if(!url)return;document.getElementById('result').innerHTML='<p class="loading">Extracting profile data...</p>';try{const resp=await fetch(`/api/extract?url=${encodeURIComponent(url)}`);const d=await resp.json();if(!d.success){document.getElementById('result').innerHTML=`<p class="error">${d.error}</p>`;return}const photo=d.profilePhoto?`<img src="${d.profilePhoto}" class="full-photo">`:`<div class="no-photo">No profile photo available</div>`;const wayback=`https://web.archive.org/web/https://www.facebook.com/profile.php?id=${d.id}`;document.getElementById('result').innerHTML=`<div class="card"><div class="info-section"><div class="profile-name">${d.name||'Unknown'}</div><div class="profile-username">@${d.username||'N/A'}</div><div class="meta-grid"><div class="meta-row"><span class="meta-label">User ID</span><div class="meta-value"><span>${d.id}</span><button class="copy-btn" onclick="copy('${d.id}',this)">Copy</button></div></div><div class="meta-row"><span class="meta-label">Profile URL</span><div class="meta-value"><span style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">facebook.com/profile.php?id=${d.id}</span><button class="copy-btn" onclick="copy('${d.profile}',this)">Copy</button></div></div></div></div><div class="buttons"><a href="${d.profile}" target="_blank" class="btn">Profile</a><a href="${d.marketplace}" target="_blank" class="btn">Marketplace</a><a href="${wayback}" target="_blank" class="btn">Wayback</a></div><div class="photos-section"><div class="section-label">Profile Photo</div>${photo}</div></div>`}catch(e){document.getElementById('result').innerHTML=`<p class="error">${e.message}</p>`}}
+  </script>
+</body>
+</html>
