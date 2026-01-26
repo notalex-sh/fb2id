@@ -277,6 +277,56 @@ input::placeholder {
   text-align: center;
 }
 
+.error-box {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 10px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.error-msg {
+  color: #e5e5e5;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.error-help {
+  color: #525252;
+  font-size: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.manual-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.manual-btn {
+  padding: 0.625rem 1rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: #171717;
+  color: #e5e5e5;
+  border: 1px solid #262626;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.manual-btn:hover {
+  background: #262626;
+}
+
+.error-hint {
+  color: #404040;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+}
+
 .loading {
   color: #525252;
   font-size: 0.875rem;
