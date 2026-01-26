@@ -33,9 +33,9 @@ async function extract() {
   doExtract(input);
 }
 
-function openViewSource() {
+function openProfile() {
   if (lastUrl) {
-    window.open('view-source:' + lastUrl, '_blank');
+    window.open(lastUrl, '_blank');
   }
 }
 
@@ -43,12 +43,12 @@ async function pasteAndExtract() {
   try {
     const html = await navigator.clipboard.readText();
     if (!html || html.length < 100) {
-      document.getElementById('result').innerHTML = '<p class="error">Clipboard empty or invalid. Copy the page source first.</p>';
+      showManualExtractWithError('Clipboard empty or invalid. Copy the page source first.');
       return;
     }
     extractFromHtml(html, lastUrl);
   } catch (err) {
-    document.getElementById('result').innerHTML = '<p class="error">Clipboard access denied. Please allow clipboard permissions.</p>';
+    showManualExtractWithError('Clipboard access denied. Please allow clipboard permissions.');
   }
 }
 
@@ -132,7 +132,7 @@ function extractFromHtml(html, url) {
   }
 
   if (!userId) {
-    document.getElementById('result').innerHTML = '<p class="error">Could not find ID in pasted source.</p>';
+    showManualExtractWithError('Could not find ID in pasted source. Make sure you copied the full page source.');
     return;
   }
 
@@ -147,18 +147,29 @@ function extractFromHtml(html, url) {
 
 function showManualExtract(url, errorMsg = '') {
   lastUrl = url;
-  const reason = errorMsg.includes('ID not found')
-    ? 'The platform may be serving a limited page to the server.'
-    : 'The server may be blocked by the platform.';
   document.getElementById('result').innerHTML = `
     <div class="error-box">
-      <p class="error-msg">${reason}</p>
-      <p class="error-help">Try extracting manually:</p>
+      <p class="error-msg">The account may not exist, or the platform is blocking the request.</p>
+      <p class="error-help">If you know the account exists, try extracting manually:</p>
       <div class="manual-buttons">
-        <button class="manual-btn" onclick="openViewSource()">1. View Source</button>
-        <button class="manual-btn" onclick="pasteAndExtract()">2. Paste from Clipboard</button>
+        <button class="manual-btn" onclick="openProfile()">1. Open Profile</button>
+        <button class="manual-btn" onclick="pasteAndExtract()">2. Paste Source</button>
       </div>
-      <p class="error-hint">Click "View Source", then Ctrl+A to select all, Ctrl+C to copy, then click "Paste from Clipboard"</p>
+      <p class="error-hint">Open the profile, press Ctrl+U to view source, then Ctrl+A, Ctrl+C to copy, then click "Paste Source"</p>
+    </div>
+  `;
+}
+
+function showManualExtractWithError(errorMsg) {
+  document.getElementById('result').innerHTML = `
+    <div class="error-box">
+      <p class="error-msg">${errorMsg}</p>
+      <p class="error-help">Try again:</p>
+      <div class="manual-buttons">
+        <button class="manual-btn" onclick="openProfile()">1. Open Profile</button>
+        <button class="manual-btn" onclick="pasteAndExtract()">2. Paste Source</button>
+      </div>
+      <p class="error-hint">Open the profile, press Ctrl+U to view source, then Ctrl+A, Ctrl+C to copy, then click "Paste Source"</p>
     </div>
   `;
 }
