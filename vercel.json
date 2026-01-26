@@ -2,8 +2,8 @@
   "framework": null,
   "buildCommand": "",
   "installCommand": "npm install",
+  "outputDirectory": "public",
   "routes": [
-    { "src": "/api/extract", "dest": "/api/extract.js" },
-    { "src": "/(.*)", "dest": "/$1" }
+    { "src": "/api/extract", "dest": "/api/extract.js" }
   ]
 }

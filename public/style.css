@@ -1,9 +1,11 @@
+/* Reset */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+/* Base */
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: #050505;
@@ -17,6 +19,7 @@ body {
   margin: 0 auto;
 }
 
+/* Header */
 header {
   text-align: center;
   margin-bottom: 2.5rem;
@@ -38,38 +41,7 @@ h1 {
   font-size: 0.875rem;
 }
 
-.tabs {
-  display: flex;
-  background: #0a0a0a;
-  border: 1px solid #1a1a1a;
-  border-radius: 10px;
-  padding: 0.25rem;
-  margin-bottom: 1rem;
-}
-
-.tab {
-  flex: 1;
-  padding: 0.625rem 1rem;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  color: #525252;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.tab:hover {
-  color: #a3a3a3;
-}
-
-.tab.active {
-  background: #171717;
-  color: #fafafa;
-}
-
+/* Search */
 .search-box {
   display: flex;
   gap: 0.5rem;
@@ -115,6 +87,43 @@ input::placeholder {
   background: #e5e5e5;
 }
 
+/* Platform Select */
+.platform-select {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 10px;
+}
+
+.platform-label {
+  font-size: 0.75rem;
+  color: #525252;
+  margin-right: 0.25rem;
+}
+
+.platform-btn {
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: #171717;
+  color: #a3a3a3;
+  border: 1px solid #262626;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.platform-btn:hover {
+  background: #262626;
+  color: #fafafa;
+}
+
+/* Result Card */
 .card {
   background: #0a0a0a;
   border: 1px solid #1a1a1a;
@@ -139,6 +148,7 @@ input::placeholder {
   margin-bottom: 1rem;
 }
 
+/* Meta Info */
 .meta-grid {
   display: flex;
   flex-direction: column;
@@ -194,6 +204,7 @@ input::placeholder {
   color: #fafafa;
 }
 
+/* Action Buttons */
 .buttons {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -219,6 +230,13 @@ input::placeholder {
   background: #262626;
 }
 
+.btn.disabled {
+  background: #0f0f0f;
+  color: #333;
+  cursor: not-allowed;
+}
+
+/* Photos Section */
 .photos-section {
   padding: 1.25rem;
 }
@@ -248,6 +266,7 @@ input::placeholder {
   border: 1px dashed #1a1a1a;
 }
 
+/* States */
 .error {
   color: #e5e5e5;
   background: #0a0a0a;
