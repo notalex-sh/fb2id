@@ -47,11 +47,14 @@ export const GET: RequestHandler = async ({ url }) => {
 			if (ogTitle) name = ogTitle[1].split('(')[0].split('\u2022')[0].trim();
 		} else {
 			const fbIdPatterns = [
-				/(profile_id|entity_id|userID|user_id|owner_id)["']?\s*[:=]\s*["']?(\d{5,20})/
+				/"profile_owner"\s*:\s*\{\s*"id"\s*:\s*"(\d{5,20})"/,
+				/"userVanity"\s*:\s*"[^"]+"\s*,\s*"userID"\s*:\s*"(\d{5,20})"/,
+				/fb:\/\/profile\/(\d{5,20})/,
+				/profile\.php\?id=(\d{5,20})/
 			];
 			for (const pattern of fbIdPatterns) {
 				const match = html.match(pattern);
-				if (match) { userId = match[2]; break; }
+				if (match) { userId = match[1]; break; }
 			}
 
 			const ogMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)/i);

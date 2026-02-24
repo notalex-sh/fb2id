@@ -17,6 +17,10 @@
 	let manualExtract = $state(false);
 	let lastUrl = $state('');
 	let copyLabel = $state('copy');
+	let showManualPaste = $state(false);
+	let pasteSource = $state('');
+	let pasteError = $state('');
+	let pasteLoading = $state(false);
 
 	// Returns true if the string looks like a URL rather than a bare username.
 	function isUrl(str: string): boolean {
@@ -64,6 +68,10 @@
 		result = null;
 		errorMsg = '';
 		manualExtract = false;
+		showManualPaste = false;
+		pasteSource = '';
+		pasteError = '';
+		pasteLoading = false;
 		copyLabel = 'copy';
 
 		try {
@@ -98,17 +106,50 @@
 		if (lastUrl) window.open(lastUrl, '_blank');
 	}
 
-	// Reads HTML source from the clipboard and passes it to client-side extraction.
-	async function pasteAndExtract() {
+	// Reads page source from clipboard and extracts profile data.
+	async function readFromClipboard() {
+		pasteError = '';
+		pasteLoading = true;
+		result = null;
+
 		try {
-			const html = await navigator.clipboard.readText();
-			if (!html || html.length < 100) {
-				errorMsg = 'Clipboard empty or invalid. Copy the page source first.';
+			const text = await navigator.clipboard.readText();
+			if (!text.trim()) {
+				pasteError = 'Clipboard is empty';
 				return;
 			}
-			extractFromHtml(html, lastUrl);
+			if (text.length < 100) {
+				pasteError = 'Clipboard content too short — make sure you copied the full page source';
+				return;
+			}
+			extractFromHtml(text, lastUrl);
+			if (!result) {
+				pasteError = 'Could not find ID in clipboard content';
+			}
 		} catch {
-			errorMsg = 'Clipboard access denied. Please allow clipboard permissions.';
+			showManualPaste = true;
+			pasteError = 'Clipboard access denied — paste manually below';
+		} finally {
+			pasteLoading = false;
+		}
+	}
+
+	// Processes manually pasted source from the fallback textarea.
+	function processManualPaste() {
+		const html = pasteSource.trim();
+		if (!html) {
+			pasteError = 'Paste the page source code first';
+			return;
+		}
+		pasteError = '';
+		pasteLoading = true;
+		try {
+			extractFromHtml(html, lastUrl);
+			if (!result) {
+				pasteError = 'Could not find ID in pasted source. Make sure you copied the full page source.';
+			}
+		} finally {
+			pasteLoading = false;
 		}
 	}
 
@@ -140,11 +181,14 @@
 			if (ogTitle) name = ogTitle[1].split('(')[0].split('\u2022')[0].trim();
 		} else {
 			const fbIdPatterns = [
-				/(profile_id|entity_id|userID|user_id|owner_id)["']?\s*[:=]\s*["']?(\d{5,20})/
+				/"profile_owner"\s*:\s*\{\s*"id"\s*:\s*"(\d{5,20})"/,
+				/"userVanity"\s*:\s*"[^"]+"\s*,\s*"userID"\s*:\s*"(\d{5,20})"/,
+				/fb:\/\/profile\/(\d{5,20})/,
+				/profile\.php\?id=(\d{5,20})/
 			];
 			for (const pattern of fbIdPatterns) {
 				const match = html.match(pattern);
-				if (match) { userId = match[2]; break; }
+				if (match) { userId = match[1]; break; }
 			}
 
 			const ogMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)/i);
@@ -168,10 +212,7 @@
 			}
 		}
 
-		if (!userId) {
-			errorMsg = 'Could not find ID in pasted source. Make sure you copied the full page source.';
-			return;
-		}
+		if (!userId) return;
 
 		manualExtract = false;
 		result = {
@@ -278,25 +319,78 @@
 						<span class="text-red-500">err:</span> {errorMsg || 'the platform may be blocking the request'}
 					</p>
 					<p class="text-xs text-zinc-500 mb-4">if you know the account exists, try manual extraction:</p>
-					<div class="flex gap-2 mb-4">
-						<button
-							onclick={openProfile}
-							class="border border-zinc-800 hover:border-zinc-400 rounded px-4 py-2
-								text-xs text-zinc-400 hover:text-white transition-all duration-200 cursor-pointer"
-						>
-							1. open profile
-						</button>
-						<button
-							onclick={pasteAndExtract}
-							class="border border-zinc-800 hover:border-zinc-400 rounded px-4 py-2
-								text-xs text-zinc-400 hover:text-white transition-all duration-200 cursor-pointer"
-						>
-							2. paste source
-						</button>
-					</div>
-					<p class="text-[10px] text-zinc-700 leading-relaxed">
-						open the profile, press ctrl+u to view source, then ctrl+a, ctrl+c to copy, then click "paste source"
+
+					<p class="text-[10px] text-zinc-600 mb-4 leading-relaxed">
+						everything is processed locally in your browser — no data is sent to any server.
 					</p>
+
+					<div class="space-y-2 mb-5">
+						<div class="flex items-start gap-2">
+							<span class="text-[10px] text-zinc-600 font-medium mt-0.5 shrink-0">1.</span>
+							<p class="text-xs text-zinc-400">
+								<button onclick={openProfile} class="underline underline-offset-2 hover:text-white transition-colors cursor-pointer">open the profile</button> in a new tab
+							</p>
+						</div>
+						<div class="flex items-start gap-2">
+							<span class="text-[10px] text-zinc-600 font-medium mt-0.5 shrink-0">2.</span>
+							<p class="text-xs text-zinc-400">
+								press <kbd class="px-1 py-0.5 bg-zinc-900 border border-zinc-700 rounded text-[10px] text-zinc-300">ctrl</kbd> + <kbd class="px-1 py-0.5 bg-zinc-900 border border-zinc-700 rounded text-[10px] text-zinc-300">u</kbd> to view source
+							</p>
+						</div>
+						<div class="flex items-start gap-2">
+							<span class="text-[10px] text-zinc-600 font-medium mt-0.5 shrink-0">3.</span>
+							<p class="text-xs text-zinc-400">
+								press <kbd class="px-1 py-0.5 bg-zinc-900 border border-zinc-700 rounded text-[10px] text-zinc-300">ctrl</kbd> + <kbd class="px-1 py-0.5 bg-zinc-900 border border-zinc-700 rounded text-[10px] text-zinc-300">a</kbd> then <kbd class="px-1 py-0.5 bg-zinc-900 border border-zinc-700 rounded text-[10px] text-zinc-300">ctrl</kbd> + <kbd class="px-1 py-0.5 bg-zinc-900 border border-zinc-700 rounded text-[10px] text-zinc-300">c</kbd> to copy all
+							</p>
+						</div>
+						<div class="flex items-start gap-2">
+							<span class="text-[10px] text-zinc-600 font-medium mt-0.5 shrink-0">4.</span>
+							<p class="text-xs text-zinc-400">come back here and click the button below</p>
+						</div>
+					</div>
+
+					<button
+						onclick={readFromClipboard}
+						disabled={pasteLoading}
+						class="w-full border border-zinc-800 hover:border-zinc-400 rounded px-4 py-2.5
+							text-xs text-zinc-400 hover:text-white transition-all duration-200 cursor-pointer
+							disabled:opacity-50 disabled:cursor-not-allowed"
+					>
+						{#if pasteLoading}
+							<span class="inline-flex items-center gap-1.5">
+								<span class="inline-block w-1 h-1 bg-zinc-400 rounded-full animate-pulse"></span>
+								<span class="inline-block w-1 h-1 bg-zinc-400 rounded-full animate-pulse [animation-delay:0.2s]"></span>
+								<span class="inline-block w-1 h-1 bg-zinc-400 rounded-full animate-pulse [animation-delay:0.4s]"></span>
+							</span>
+						{:else}
+							read from clipboard
+						{/if}
+					</button>
+
+					{#if pasteError}
+						<p class="text-xs text-red-400 mt-3">{pasteError}</p>
+					{/if}
+
+					{#if showManualPaste}
+						<div class="mt-4 animate-fade-in">
+							<textarea
+								bind:value={pasteSource}
+								placeholder="paste page source here..."
+								class="w-full h-28 bg-black border border-zinc-800 rounded px-3 py-2
+									text-xs text-zinc-300 placeholder:text-zinc-700
+									focus:outline-none focus:border-zinc-600 resize-none font-mono"
+							></textarea>
+							<button
+								onclick={processManualPaste}
+								disabled={pasteLoading || !pasteSource.trim()}
+								class="mt-2 w-full border border-zinc-800 hover:border-zinc-400 rounded px-4 py-2.5
+									text-xs text-zinc-400 hover:text-white transition-all duration-200 cursor-pointer
+									disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								extract
+							</button>
+						</div>
+					{/if}
 				</div>
 			</div>
 		{/if}
